@@ -1,0 +1,26 @@
+
+server:
+  # 监听端口
+  port: 8812
+  # 运行模式：debug / release / test
+  mode: release
+
+sqlite:
+  # SQLite 数据库文件路径
+  path: ./data/emergency-center.db
+  # 是否打印 SQL 调试日志
+  log-mode: false
+
+log:
+  # 日志等级：debug / info / warn / error
+  level: info
+  # 输出格式：text（人读）| json（采集）
+  format: text
+  # 输出目标：stdout | file | both
+  output: both
+  file:
+    path: logs/emergency-center.log
+    max_size_mb: 50
+    max_backups: 10
+    max_age_days: 10
+    compress: true
