@@ -1,7 +1,7 @@
 /**
 @Time : 2026/09/16 15:07
 @Author: FangYao( 方少、)
-@Description:
+@Description:  存储配置表
 @Email: fy20030315@163.com
 */
 

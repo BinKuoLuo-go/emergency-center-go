@@ -11,13 +11,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	alarmapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/alarm"
+	devicestatusapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/devicestatus"
 	objectstoreapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/objectstore"
 	snapshotapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/snapshot"
 	"github.com/BinKuoLuo-go/emergency-center-go/internal/infrastructure/config"
 	"github.com/BinKuoLuo-go/emergency-center-go/internal/infrastructure/persistence"
-	"github.com/BinKuoLuo-go/emergency-center-go/internal/infrastructure/persistence/sqlite"
+	"github.com/BinKuoLuo-go/emergency-center-go/internal/infrastructure/persistence/mysql"
+	"github.com/BinKuoLuo-go/emergency-center-go/internal/infrastructure/persistence/redis"
 	"github.com/BinKuoLuo-go/emergency-center-go/internal/infrastructure/port"
 	"github.com/BinKuoLuo-go/emergency-center-go/internal/interfaces/http/router"
+	mqttsub "github.com/BinKuoLuo-go/emergency-center-go/internal/interfaces/mqtt"
 	applog "github.com/BinKuoLuo-go/emergency-center-go/pkg/log"
 	"github.com/gin-gonic/gin"
 	"os"
@@ -43,28 +47,55 @@ func main() {
 	if cfg.Server.Mode == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	db, err := sqlite.NewSqlite(cfg.Sqlite)
+
+	db, err := mysql.NewMysqlDB(cfg.Mysql)
 	if err != nil {
 		applog.Fatalf("init mysql: %v", err)
+	}
+
+	// redis
+	var redisClient *redis.Client
+	redisClient, err = redis.NewClient(cfg.Redis)
+	if err != nil {
+		applog.Warn("Redis 无法使用", "err", err)
+	} else {
+		defer redisClient.Close()
 	}
 
 	objectStoreRepo := persistence.NewObjectStoreConfigRepository(db)
 	objectStoreService := objectstoreapp.NewService(objectStoreRepo)
 
-	// 对象存储实例提供者：始终取到「当前」配置的存储实现（支持配置热更新）
+	// 始终取到当前配置的存储实现 支持配置热更新
 	storeProvider := func() port.ObjectStore { return objectStoreService.Store() }
 
-	// 快照查询：仓储 + 应用服务
+	// 快照查询 仓储 应用服务
 	snapshotRepo := persistence.NewSnapshotRepository(storeProvider)
 	snapshotService := snapshotapp.NewService(snapshotRepo, storeProvider)
+
+	// 告警 仓储 应用服务
+	alarmRepo := persistence.NewAlarmRepository(db)
+	alarmService := alarmapp.NewService(alarmRepo)
+
+	// 设备状态 Redis 维护最新状态心跳在线
+	deviceStatusService := devicestatusapp.NewService(redisClient)
+
+	// MQTT订阅器 告警、销警入MySQL 心跳与设备状态等等写入 Redis
+	alarmSubscriber := mqttsub.NewSubscriber(cfg.Mqtt, alarmService, deviceStatusService)
+	if err := alarmSubscriber.Start(); err != nil {
+		applog.Warn("MQTT 订阅器启动失败", "err", err)
+	} else {
+		defer alarmSubscriber.Stop()
+	}
 
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	r := gin.New()
 	router.Setup(r, router.Deps{
-		ObjectStoreService: objectStoreService,
-		SnapshotService:    snapshotService,
+		ObjectStoreService:  objectStoreService,
+		SnapshotService:     snapshotService,
+		AlarmService:        alarmService,
+		DeviceStatusService: deviceStatusService,
 	})
 
 	// 优雅关闭信号监听

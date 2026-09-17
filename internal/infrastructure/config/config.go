@@ -19,6 +19,9 @@ import (
 type Config struct {
 	Server ServerConfig `mapstructure:"server" json:"server"`
 	Sqlite SqliteConfig `mapstructure:"sqlite" json:"sqlite"`
+	Mysql  MySQLConfig  `mapstructure:"mysql" json:"mysql"`
+	Redis  RedisConfig  `mapstructure:"redis" json:"redis"`
+	Mqtt   MQTTConfig   `mapstructure:"mqtt" json:"mqtt"`
 	Log    LogConfig    `mapstructure:"log" json:"log"`
 }
 
@@ -47,6 +50,47 @@ type LogFileConfig struct {
 type SqliteConfig struct {
 	Path    string `mapstructure:"path" json:"path"`
 	LogMode bool   `mapstructure:"log-mode" json:"logMode"`
+}
+
+// MySQL配置
+type MySQLConfig struct {
+	Host         string `mapstructure:"host"`
+	Port         int    `mapstructure:"port"`
+	User         string `mapstructure:"user"`
+	Password     string `mapstructure:"password"`
+	Database     string `mapstructure:"database"`
+	Charset      string `mapstructure:"charset"`
+	MaxIdleConns int    `mapstructure:"max_idle_conns"`
+	MaxOpenConns int    `mapstructure:"max_open_conns"`
+}
+
+func (c MySQLConfig) DSN() string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local",
+		c.User, c.Password, c.Host, c.Port, c.Database, c.Charset)
+}
+
+// Redis配置
+type RedisConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Password string `mapstructure:"password"`
+	Database int    `mapstructure:"database"`
+	PoolSize int    `mapstructure:"pool_size"`
+}
+
+func (c RedisConfig) Addr() string {
+	return fmt.Sprintf("%s:%d", c.Host, c.Port)
+}
+
+// MQTT配置 订阅边缘端上报的告警、心跳、设备状态消息
+type MQTTConfig struct {
+	Enabled     bool   `mapstructure:"enabled" json:"enabled"`          // 是否启用 MQTT 订阅
+	Broker      string `mapstructure:"broker" json:"broker"`            // Broker 地址，如 tcp://127.0.0.1:1883
+	ClientID    string `mapstructure:"client_id" json:"clientId"`       // 客户端 ID
+	Username    string `mapstructure:"username" json:"username"`        // 用户名
+	Password    string `mapstructure:"password" json:"password"`        // 密码
+	Topic       string `mapstructure:"topic" json:"topic"`              // 告警订阅主题，如 emergency/alarm/#
+	StatusTopic string `mapstructure:"status_topic" json:"statusTopic"` // 设备状态订阅主题，如 emergency/status/#
 }
 
 // 加载配置文件

@@ -32,13 +32,13 @@ type ObjectStore interface {
 	Get(ctx context.Context, key string) (io.ReadCloser, error)
 	// Delete 删除对象。
 	Delete(ctx context.Context, key string) error
-	// PresignGet 生成限时下载 URL（浏览器直链）。
+	// PresignGet 生成限时下载 URL。
 	PresignGet(ctx context.Context, key string, expiry time.Duration) (string, error)
-	// List 列出指定前缀下的全部对象（递归），按 Key 字典序返回。
+	// List 列出指定前缀下的全部对象，按 Key 字典序返回。
 	List(ctx context.Context, prefix string) ([]ObjectInfo, error)
 }
 
-// ObjectStoreConfig 运行时配置视图（与库表对应，供工厂构建 Adapter）。
+// ObjectStoreConfig 运行时配置视图
 type ObjectStoreConfig struct {
 	Enabled    bool
 	Provider   string // noop | minio
@@ -51,7 +51,7 @@ type ObjectStoreConfig struct {
 	PublicBase string // 可选：对外访问前缀
 }
 
-// ObjectInfo 对象元信息（列表查询结果）。
+// ObjectInfo 对象元信息。
 type ObjectInfo struct {
 	Key          string    // 对象 key（含前缀路径）
 	Size         int64     // 文件大小（字节）
