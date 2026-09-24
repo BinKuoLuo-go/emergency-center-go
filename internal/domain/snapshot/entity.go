@@ -22,15 +22,15 @@ type Snapshot struct {
 
 // Repository 快照列表查询端口。
 type Repository interface {
-	// ListByDeviceAndDate 按设备 + 日期文件夹分页查询快照列表。
+	// ListByDeviceAndDate 按设备 日期文件夹分页查询快照列表。
 	ListByDeviceAndDate(ctx context.Context, q Query) (*Page, error)
 }
 
 // Query 快照查询条件。
 type Query struct {
 	DeviceID string // 边缘设备 ID
-	Date     string // 日期文件夹名（如 20260916）
-	Company  string // 公司/园区名（可选，用于精确前缀，提升查询效率）
+	Date     string // 日期文件夹名
+	Company  string // 公司/园区名
 	Page     int    // 页码，从 1 开始
 	PageSize int    // 每页数量
 }

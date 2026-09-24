@@ -61,25 +61,25 @@ func main() {
 	} else {
 		defer redisClient.Close()
 	}
-
+	// 对象存储相关 minio
 	objectStoreRepo := persistence.NewObjectStoreConfigRepository(db)
 	objectStoreService := objectstoreapp.NewService(objectStoreRepo)
 
-	// 始终取到当前配置的存储实现 支持配置热更新
+	// 当前配置的存储实现,配置热更新
 	storeProvider := func() port.ObjectStore { return objectStoreService.Store() }
 
-	// 快照查询 仓储 应用服务
+	// 快照相关
 	snapshotRepo := persistence.NewSnapshotRepository(storeProvider)
 	snapshotService := snapshotapp.NewService(snapshotRepo, storeProvider)
 
-	// 告警 仓储 应用服务
+	// 告警相关
 	alarmRepo := persistence.NewAlarmRepository(db)
 	alarmService := alarmapp.NewService(alarmRepo)
 
-	// 设备状态 Redis 维护最新状态心跳在线
+	// 设备状态相关
 	deviceStatusService := devicestatusapp.NewService(redisClient)
 
-	// MQTT订阅器 告警、销警入MySQL 心跳与设备状态等等写入 Redis
+	// MQTT订阅器
 	alarmSubscriber := mqttsub.NewSubscriber(cfg.Mqtt, alarmService, deviceStatusService)
 	if err := alarmSubscriber.Start(); err != nil {
 		applog.Warn("MQTT 订阅器启动失败", "err", err)
@@ -98,7 +98,7 @@ func main() {
 		DeviceStatusService: deviceStatusService,
 	})
 
-	// 优雅关闭信号监听
+	// 关闭信号监听
 	go func() {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)

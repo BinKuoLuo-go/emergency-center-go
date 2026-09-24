@@ -25,8 +25,8 @@ type Deps struct {
 }
 
 func Setup(r *gin.Engine, deps Deps) {
-	r.Use(gin.Recovery())              // 使用 Gin 自带的恢复中间件，捕获 panic 防止程序崩溃
-	r.Use(middleware.CORSMiddleware()) // 跨域中间件
+	r.Use(gin.Recovery())              // 使用Gin自带的恢复中间件，捕获 panic 防止程序崩溃
+	r.Use(middleware.CORSMiddleware()) // 注入跨域中间件
 
 	objectStoreHandler := handler.NewObjectStoreHandler(deps.ObjectStoreService)
 	snapshotHandler := handler.NewSnapshotHandler(deps.SnapshotService)

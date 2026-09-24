@@ -21,10 +21,10 @@ import (
 )
 
 const (
-	onlineKeyPrefix = "emergency:online:"        // 在线状态 key 前缀
-	statusKeyPrefix = "emergency:device:status:" // 设备资源状态 key 前缀
-	onlineTTL       = 30 * time.Second           // 在线状态 TTL
-	statusTTL       = 90 * time.Second           // 设备状态 TTL
+	onlineKeyPrefix = "emergency:online:"        // 在线状态key前缀
+	statusKeyPrefix = "emergency:device:status:" // 设备资源状态key前缀
+	onlineTTL       = 30 * time.Second           // 在线状态TTL
+	statusTTL       = 90 * time.Second           // 设备状态 TL
 )
 
 // Service 设备状态应用服务

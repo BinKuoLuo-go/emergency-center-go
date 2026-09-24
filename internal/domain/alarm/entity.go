@@ -11,12 +11,12 @@ import "context"
 
 // Alarm 告警记录
 type Alarm struct {
-	ID             string `json:"id"`             // 消息唯一 ID（UUID）
+	ID             string `json:"id"`             // 消息唯一ID UUID
 	CompanyCode    string `json:"companyCode"`    // 公司编码
 	CompanyName    string `json:"companyName"`    // 公司名称
-	DeviceID       string `json:"deviceId"`       // 边缘设备 ID
+	DeviceID       string `json:"deviceId"`       // 边缘设备ID
 	VideoCode      string `json:"videoCode"`      // 视频编码，如 h264
-	VideoAlarmType string `json:"videoAlarmType"` // 告警类型，如 overcrowding
+	VideoAlarmType string `json:"videoAlarmType"` // 告警类型
 	AlarmStatus    string `json:"alarmStatus"`    // 0=销警/正常 1=报警
 	AlarmTime      string `json:"alarmTime"`      // 报警/销警时间 yyyy-MM-dd HH:mm:ss
 	AlarmPicture   string `json:"alarmPicture"`   // 告警图片

@@ -24,17 +24,17 @@ var (
 type ObjectStore interface {
 	// Provider 返回驱动名：noop | minio
 	Provider() string
-	// Health 探测连通性（桶是否可达）。
+	// Health 探测连通性
 	Health(ctx context.Context) error
-	// Put 上传对象。
+	// Put 上传对象
 	Put(ctx context.Context, key string, r io.Reader, size int64, contentType string) error
-	// Get 下载对象。
+	// Get 下载对象
 	Get(ctx context.Context, key string) (io.ReadCloser, error)
-	// Delete 删除对象。
+	// Delete 删除对象
 	Delete(ctx context.Context, key string) error
-	// PresignGet 生成限时下载 URL。
+	// PresignGet 生成限时下载 URL
 	PresignGet(ctx context.Context, key string, expiry time.Duration) (string, error)
-	// List 列出指定前缀下的全部对象，按 Key 字典序返回。
+	// List 列出指定前缀下的全部对象，按 Key 字典序返回
 	List(ctx context.Context, prefix string) ([]ObjectInfo, error)
 }
 

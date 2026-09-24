@@ -88,13 +88,14 @@ func ensureDatabase(cfg config.MySQLConfig) error {
 	return nil
 }
 
-// autoMigrateAll 自动表迁移：
+// autoMigrateAll 自动表迁移
 func autoMigrateAll(db *gorm.DB) error {
 	models := []any{
 		&model.ObjectStoreConfig{},
+		&model.Alarm{},
 	}
 	for _, m := range models {
-		exists := db.Migrator().HasTable(m) // 迁移前记录表是否已存在，仅用于日志
+		exists := db.Migrator().HasTable(m) // 迁移前记录表是否已存在
 		if err := db.AutoMigrate(m); err != nil {
 			return fmt.Errorf("%T: %w", m, err) // 错误中带上模型类型，方便定位
 		}

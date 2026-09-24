@@ -47,7 +47,7 @@ func (n *Noop) List(ctx context.Context, prefix string) ([]port.ObjectInfo, erro
 	return nil, port.ErrStoreDisabled
 }
 
-// Factory 按配置构建 ObjectStore。未启用或未知驱动 → Noop。
+// Factory 按配置构建 ObjectStore 未启用或未知驱动则noop
 func Factory(cfg port.ObjectStoreConfig) (port.ObjectStore, error) {
 	if !cfg.Enabled {
 		return NewNoop(), nil

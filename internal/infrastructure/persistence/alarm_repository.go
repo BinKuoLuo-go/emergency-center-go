@@ -76,7 +76,7 @@ func (r *AlarmRepository) List(ctx context.Context, q alarm.Query) (*alarm.Page,
 	return &alarm.Page{List: list, Total: total, Page: page, PageSize: pageSize}, nil
 }
 
-// toAlarmModel 领域实体到落库模型
+// toAlarmModel 领域实体到表
 func toAlarmModel(a *alarm.Alarm) *model.Alarm {
 	if a == nil {
 		return &model.Alarm{}
@@ -99,7 +99,7 @@ func toAlarmModel(a *alarm.Alarm) *model.Alarm {
 	}
 }
 
-// toAlarmDomain 落库模型到领域实体。
+// toAlarmDomain 表到领域实体。
 func toAlarmDomain(m *model.Alarm) alarm.Alarm {
 	return alarm.Alarm{
 		ID:             m.ID,

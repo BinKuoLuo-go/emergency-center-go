@@ -89,8 +89,8 @@ type MQTTConfig struct {
 	ClientID    string `mapstructure:"client_id" json:"clientId"`       // 客户端 ID
 	Username    string `mapstructure:"username" json:"username"`        // 用户名
 	Password    string `mapstructure:"password" json:"password"`        // 密码
-	Topic       string `mapstructure:"topic" json:"topic"`              // 告警订阅主题，如 emergency/alarm/#
-	StatusTopic string `mapstructure:"status_topic" json:"statusTopic"` // 设备状态订阅主题，如 emergency/status/#
+	Topic       string `mapstructure:"topic" json:"topic"`              // 告警订阅主题
+	StatusTopic string `mapstructure:"status_topic" json:"statusTopic"` // 设备状态订阅主题
 }
 
 // 加载配置文件

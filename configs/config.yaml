@@ -34,8 +34,8 @@ mqtt:
   # 是否启用 MQTT 订阅 接收边缘端告警等消息后写入MySQL
   enabled: true
   # MQTT Broker 地址
-  broker: "tcp://127.0.0.1:1883"
-  # 客户端 ID（中心平台唯一）
+  broker: "tcp://10.254.1.6:1883"
+  # 客户端 ID
   client_id: "emergency-center"
   username: "admin"
   password: "1234abcd"
