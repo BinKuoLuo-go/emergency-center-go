@@ -11,9 +11,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	provinceadapter "github.com/BinKuoLuo-go/emergency-center-go/internal/adapter/province"
 	alarmapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/alarm"
 	devicestatusapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/devicestatus"
 	objectstoreapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/objectstore"
+	provinceapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/province"
 	snapshotapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/snapshot"
 	"github.com/BinKuoLuo-go/emergency-center-go/internal/infrastructure/config"
 	"github.com/BinKuoLuo-go/emergency-center-go/internal/infrastructure/persistence"
@@ -79,8 +81,18 @@ func main() {
 	// 设备状态相关
 	deviceStatusService := devicestatusapp.NewService(redisClient)
 
+	// 省平台凭据提供器：token 统一由省平台 token 接口动态获取
+	tokenProvider := provinceadapter.NewRemoteTokenProvider(cfg.Province)
+
+	// 省平台上报：中心平台收到边缘端报警/销警后，转发到省平台服务器
+	provinceService := provinceapp.NewService(
+		cfg.Province.Enabled,
+		provinceadapter.NewClient(cfg.Province, tokenProvider),
+		storeProvider,
+	)
+
 	// MQTT订阅器
-	alarmSubscriber := mqttsub.NewSubscriber(cfg.Mqtt, alarmService, deviceStatusService)
+	alarmSubscriber := mqttsub.NewSubscriber(cfg.Mqtt, alarmService, deviceStatusService, provinceService)
 	if err := alarmSubscriber.Start(); err != nil {
 		applog.Warn("MQTT 订阅器启动失败", "err", err)
 	} else {

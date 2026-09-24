@@ -45,6 +45,22 @@ mqtt:
   status_topic: "emergency/status/#"
 
 
+province:
+  # 是否启用省平台上报
+  enabled: false
+  # 省平台接口基地址，如 https://xx.xx.xx
+  base_url: ""
+  # 上报接口路径，默认 /v2/data/receive/device/gatherAlarm
+  endpoint: "/v2/data/receive/device/gatherAlarm"
+  # token 获取接口地址
+  token_url: ""
+  # AES-GCM-256 密钥（hex，32 字节）
+  aes_key: ""
+  # AES-GCM-256 IV（hex，16 字节）
+  aes_iv: ""
+  # 单次上报请求超时（秒）
+  timeout_sec: 10
+
 log:
   # 日志等级：debug / info / warn / error
   level: info

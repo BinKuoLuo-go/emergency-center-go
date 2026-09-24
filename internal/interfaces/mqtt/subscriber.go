@@ -1,7 +1,7 @@
 /**
 @Time : 2026/09/17 15:41
 @Author: FangYao( 方少、)
-@Description:
+@Description: mqtt订阅器
 @Email: fy20030315@163.com
 */
 
@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	alarmapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/alarm"
 	devicestatusapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/devicestatus"
+	provinceapp "github.com/BinKuoLuo-go/emergency-center-go/internal/application/province"
 	"github.com/BinKuoLuo-go/emergency-center-go/internal/domain/alarm"
 	"github.com/BinKuoLuo-go/emergency-center-go/internal/domain/devicestatus"
 	"github.com/BinKuoLuo-go/emergency-center-go/internal/infrastructure/config"
@@ -30,11 +31,12 @@ type Subscriber struct {
 	cfg             config.MQTTConfig
 	alarmSvc        *alarmapp.Service
 	deviceStatusSvc *devicestatusapp.Service
+	provinceSvc     *provinceapp.Service
 	client          mqtt.Client
 }
 
-func NewSubscriber(cfg config.MQTTConfig, alarmSvc *alarmapp.Service, deviceStatusSvc *devicestatusapp.Service) *Subscriber {
-	return &Subscriber{cfg: cfg, alarmSvc: alarmSvc, deviceStatusSvc: deviceStatusSvc}
+func NewSubscriber(cfg config.MQTTConfig, alarmSvc *alarmapp.Service, deviceStatusSvc *devicestatusapp.Service, provinceSvc *provinceapp.Service) *Subscriber {
+	return &Subscriber{cfg: cfg, alarmSvc: alarmSvc, deviceStatusSvc: deviceStatusSvc, provinceSvc: provinceSvc}
 }
 
 // Start 连接 Broker 并订阅主题。未启用时直接返回 nil。
@@ -83,7 +85,7 @@ func (s *Subscriber) Start() error {
 
 	s.client = mqtt.NewClient(opts)
 
-	// 连接（带有限重试，避免启动即失败导致进程退出）
+	// 连接 带有限重试
 	var err error
 	for i := 0; i < 5; i++ {
 		tok := s.client.Connect()
@@ -109,7 +111,7 @@ func (s *Subscriber) Stop() {
 }
 
 // onAlarmMessage 处理告警消息。
-// 未超员周期上报(normal) 同时刷新在线状态(Redis)并落 MySQL；报警/销警(alarm/cancel) 落 MySQL。
+// 未超员周期上报(normal) 只刷新在线状态(Redis)、不入库；报警/销警(alarm/cancel) 入库 和转发省平台。
 func (s *Subscriber) onAlarmMessage(_ mqtt.Client, msg mqtt.Message) {
 	var a alarm.Alarm
 	if err := json.Unmarshal(msg.Payload(), &a); err != nil {
@@ -120,14 +122,15 @@ func (s *Subscriber) onAlarmMessage(_ mqtt.Client, msg mqtt.Message) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// 未超员周期上报：同时刷新在线状态（Redis），并照常落 MySQL
+	// 未超员周期上报：只刷新在线状态（Redis），不落 MySQL，避免 alarm 表堆积大量心跳记录
 	if a.ReportType == "normal" {
 		if err := s.deviceStatusSvc.MarkOnline(ctx, a.DeviceID, a.CompanyCode, a.CompanyName); err != nil {
 			applog.Warn("在线状态更新失败", "deviceId", a.DeviceID, "err", err)
 		}
+		return
 	}
 
-	// 所有告警消息（心跳/报警/销警）均落 MySQL
+	// 报警/销警落 MySQL
 	if err := s.alarmSvc.Record(ctx, &a); err != nil {
 		applog.Error("告警入库失败", "id", a.ID, "err", err)
 		return
@@ -139,9 +142,20 @@ func (s *Subscriber) onAlarmMessage(_ mqtt.Client, msg mqtt.Message) {
 		"status", a.AlarmStatus,
 		"reportType", a.ReportType,
 	)
+
+	// 报警/销警实时转发到省平台 异步，避免阻塞 MQTT 处理循环
+	if s.provinceSvc != nil {
+		go func(copy alarm.Alarm) {
+			ctx2, cancel2 := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel2()
+			if err := s.provinceSvc.Report(ctx2, &copy); err != nil {
+				applog.Error("省平台上报失败", "id", copy.ID, "err", err)
+			}
+		}(a)
+	}
 }
 
-// onStatusMessage 处理设备状态消息：覆盖写最新资源状态到 Redis（不落 MySQL）。
+// onStatusMessage 处理设备状态消息：覆盖写最新资源状态到 Redis
 func (s *Subscriber) onStatusMessage(_ mqtt.Client, msg mqtt.Message) {
 	var d devicestatus.DeviceStatus
 	if err := json.Unmarshal(msg.Payload(), &d); err != nil {

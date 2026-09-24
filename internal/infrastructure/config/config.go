@@ -17,12 +17,13 @@ import (
 
 // 全局配置结构体
 type Config struct {
-	Server ServerConfig `mapstructure:"server" json:"server"`
-	Sqlite SqliteConfig `mapstructure:"sqlite" json:"sqlite"`
-	Mysql  MySQLConfig  `mapstructure:"mysql" json:"mysql"`
-	Redis  RedisConfig  `mapstructure:"redis" json:"redis"`
-	Mqtt   MQTTConfig   `mapstructure:"mqtt" json:"mqtt"`
-	Log    LogConfig    `mapstructure:"log" json:"log"`
+	Server   ServerConfig   `mapstructure:"server" json:"server"`
+	Sqlite   SqliteConfig   `mapstructure:"sqlite" json:"sqlite"`
+	Mysql    MySQLConfig    `mapstructure:"mysql" json:"mysql"`
+	Redis    RedisConfig    `mapstructure:"redis" json:"redis"`
+	Mqtt     MQTTConfig     `mapstructure:"mqtt" json:"mqtt"`
+	Log      LogConfig      `mapstructure:"log" json:"log"`
+	Province ProvinceConfig `mapstructure:"province" json:"province"`
 }
 
 // 系统配置
@@ -91,6 +92,17 @@ type MQTTConfig struct {
 	Password    string `mapstructure:"password" json:"password"`        // 密码
 	Topic       string `mapstructure:"topic" json:"topic"`              // 告警订阅主题
 	StatusTopic string `mapstructure:"status_topic" json:"statusTopic"` // 设备状态订阅主题
+}
+
+// ProvinceConfig 省平台上报配置
+type ProvinceConfig struct {
+	Enabled    bool   `mapstructure:"enabled" json:"enabled"`        // 是否启用省平台上报
+	BaseURL    string `mapstructure:"base_url" json:"baseUrl"`       // 省平台接口基地址，如 https://xx.xx.xx
+	Endpoint   string `mapstructure:"endpoint" json:"endpoint"`      // 上报接口路径，默认 /v2/data/receive/device/gatherAlarm
+	TokenURL   string `mapstructure:"token_url" json:"tokenUrl"`     // token 获取接口地址
+	AESKey     string `mapstructure:"aes_key" json:"aesKey"`         // AES-GCM-256 密钥（hex，32 字节）
+	AESIV      string `mapstructure:"aes_iv" json:"aesIv"`           // AES-GCM-256 IV（hex，16 字节 ）
+	TimeoutSec int    `mapstructure:"timeout_sec" json:"timeoutSec"` // 单次上报请求超时（秒），默认 10
 }
 
 // 加载配置文件
