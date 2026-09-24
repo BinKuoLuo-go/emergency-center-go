@@ -72,7 +72,7 @@ func (s *Subscriber) Start() error {
 	opts.SetCleanSession(true)
 	opts.SetOnConnectHandler(func(c mqtt.Client) {
 		if tok := c.Subscribe(alarmTopic, 1, s.onAlarmMessage); tok.Wait() && tok.Error() != nil {
-			applog.Error("MQTT 订阅失败", "topic", alarmTopic, "err", tok.Error())
+			applog.Error("MQTT 订阅失败", "topic", alarmTopic, "error", tok.Error())
 		} else {
 			applog.Info("MQTT 订阅成功", "topic", alarmTopic)
 		}
